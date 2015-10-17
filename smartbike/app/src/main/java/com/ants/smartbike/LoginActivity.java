@@ -9,7 +9,6 @@ import android.widget.TextView;
 import com.facebook.CallbackManager;
 import com.facebook.FacebookCallback;
 import com.facebook.FacebookException;
-import com.facebook.FacebookSdk;
 import com.facebook.login.LoginResult;
 import com.facebook.login.widget.LoginButton;
 
@@ -36,11 +35,11 @@ public class LoginActivity extends AppCompatActivity {
         loginButton.registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
             @Override
             public void onSuccess(LoginResult loginResult) {
-                info.setText(
-                        String.format("User ID: %s\nAuth Token: %s",
-                                loginResult.getAccessToken().getUserId(),
-                                loginResult.getAccessToken().getToken())
-                );
+//                info.setText(
+//                        String.format("User ID: %s\nAuth Token: %s",
+//                                loginResult.getAccessToken().getUserId(),
+//                                loginResult.getAccessToken().getToken())
+//                );
                 Intent intent = new Intent(LoginActivity.this, MainActivity.class);
                 startActivity(intent);
                 LoginActivity.this.finish();
@@ -48,7 +47,7 @@ public class LoginActivity extends AppCompatActivity {
 
             @Override
             public void onCancel() {
-                info.setText("Login attempt canceled.");
+//                info.setText("Login attempt canceled.");
             }
 
             @Override

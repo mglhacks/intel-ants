@@ -4,12 +4,13 @@ import android.content.Intent;
 import android.support.design.widget.TabLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentPagerAdapter;
+
 import android.support.v4.view.ViewPager;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -20,7 +21,14 @@ import android.view.ViewGroup;
 
 import android.widget.TextView;
 
+import com.facebook.AccessToken;
+import com.facebook.GraphRequest;
+import com.facebook.GraphResponse;
 import com.facebook.login.LoginManager;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -38,6 +46,8 @@ public class MainActivity extends AppCompatActivity {
      * The {@link ViewPager} that will host the section contents.
      */
     private ViewPager mViewPager;
+
+    private FriendsFragment friendsFragment = FriendsFragment.newInstance("", "");
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,6 +76,35 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        // send friends request
+        AccessToken accessToken = AccessToken.getCurrentAccessToken();
+        GraphRequest request = GraphRequest.newMyFriendsRequest(
+                accessToken,
+                new GraphRequest.GraphJSONArrayCallback() {
+                    @Override
+                    public void onCompleted(
+                            JSONArray jsonArray,
+                            GraphResponse response) {
+                        System.out.println(jsonArray.toString());
+                        for (int i = 0; i < jsonArray.length(); ++i) {
+                            JSONObject friend = null;
+                            String id = null;
+                            String name = null;
+                            try {
+                                friend = jsonArray.getJSONObject(i);
+                                id = friend.getString("id");
+                                name = friend.getString("name");
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                            friendsFragment.addItem(new FriendsFragment.FriendItem(id, name));
+                        }
+                    }
+                });
+        Bundle parameters = new Bundle();
+        parameters.putString("fields", "id,name");
+        request.setParameters(parameters);
+        request.executeAsync();
     }
 
 
@@ -110,7 +149,16 @@ public class MainActivity extends AppCompatActivity {
         public Fragment getItem(int position) {
             // getItem is called to instantiate the fragment for the given page.
             // Return a PlaceholderFragment (defined as a static inner class below).
+            if (position == 1) {
+                return friendsFragment;
+            }
             return PlaceholderFragment.newInstance(position + 1);
+//            switch (position) {
+//                case 0: return FirstFragment.newInstance("FirstFragment, Instance 1");
+//                case 1: return SecondFragment.newInstance("SecondFragment, Instance 1");
+//                case 2: return ThirdFragment.newInstance("ThirdFragment, Instance 1");
+//                default: return FriendsFragment.newInstance("ThirdFragment", "Default");
+//            }
         }
 
         @Override
@@ -123,11 +171,11 @@ public class MainActivity extends AppCompatActivity {
         public CharSequence getPageTitle(int position) {
             switch (position) {
                 case 0:
-                    return "SECTION 1";
+                    return "Bikes";
                 case 1:
-                    return "SECTION 2";
+                    return "Friends";
                 case 2:
-                    return "SECTION 3";
+                    return "Profile";
             }
             return null;
         }
@@ -167,4 +215,8 @@ public class MainActivity extends AppCompatActivity {
             return rootView;
         }
     }
+
+//    public interface OnFragmentInteractionListener {
+//        public void onNavFragmentInteraction(String string);
+//    }
 }
