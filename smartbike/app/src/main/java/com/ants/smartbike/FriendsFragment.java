@@ -7,11 +7,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.ListAdapter;
+import android.widget.ListView;
 import android.widget.TextView;
 
-import com.ants.smartbike.dummy.DummyContent;
+import com.ants.smartbike.dummy.FriendListAdapter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,13 +41,13 @@ public class FriendsFragment extends Fragment implements AbsListView.OnItemClick
     /**
      * The fragment's ListView/GridView.
      */
-    private AbsListView mListView;
+    private ListView listView;
 
     /**
      * The Adapter which will be used to populate the ListView/GridView with
      * Views.
      */
-    private ListAdapter mAdapter;
+    private FriendListAdapter friendListAdapter;
 
     private List<FriendItem> friends = new ArrayList<>();
 
@@ -78,22 +77,20 @@ public class FriendsFragment extends Fragment implements AbsListView.OnItemClick
             mParam2 = getArguments().getString(ARG_PARAM2);
         }
 
-        // TODO: Change Adapter to display your content
-        mAdapter = new ArrayAdapter<>(getActivity(),
-                android.R.layout.simple_list_item_1, android.R.id.text1, friends);
+        friendListAdapter = new FriendListAdapter(this.getActivity(), friends);
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_friend, container, false);
+        View view = inflater.inflate(R.layout.fragment_friends, container, false);
 
         // Set the adapter
-        mListView = (AbsListView) view.findViewById(android.R.id.list);
-        ((AdapterView<ListAdapter>) mListView).setAdapter(mAdapter);
+        listView = (ListView) view.findViewById(R.id.friends_list);
+        listView.setAdapter(friendListAdapter);
 
         // Set OnItemClickListener so we can be notified on item clicks
-        mListView.setOnItemClickListener(this);
+        listView.setOnItemClickListener(this);
 
         return view;
     }
@@ -119,7 +116,7 @@ public class FriendsFragment extends Fragment implements AbsListView.OnItemClick
      * to supply the text it should use.
      */
     public void setEmptyText(CharSequence emptyText) {
-        View emptyView = mListView.getEmptyView();
+        View emptyView = listView.getEmptyView();
 
         if (emptyView instanceof TextView) {
             ((TextView) emptyView).setText(emptyText);
@@ -127,8 +124,7 @@ public class FriendsFragment extends Fragment implements AbsListView.OnItemClick
     }
 
     public void addItem(FriendItem friendItem) {
-        friends.add(friendItem);
-        ((ArrayAdapter) mAdapter).notifyDataSetChanged();
+        friendListAdapter.add(friendItem);
     }
 
     /**
@@ -143,7 +139,7 @@ public class FriendsFragment extends Fragment implements AbsListView.OnItemClick
      */
     public interface OnFragmentInteractionListener {
         // TODO: Update argument type and name
-        public void onFragmentInteraction(String id);
+        void onFragmentInteraction(String id);
     }
 
     public static class FriendItem {

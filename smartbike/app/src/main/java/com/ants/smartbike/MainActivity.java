@@ -25,6 +25,8 @@ import com.facebook.AccessToken;
 import com.facebook.GraphRequest;
 import com.facebook.GraphResponse;
 import com.facebook.login.LoginManager;
+import com.nostra13.universalimageloader.core.ImageLoader;
+import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -105,6 +107,10 @@ public class MainActivity extends AppCompatActivity {
         parameters.putString("fields", "id,name");
         request.setParameters(parameters);
         request.executeAsync();
+
+        // Image loader
+        ImageLoaderConfiguration config = new ImageLoaderConfiguration.Builder(this).build();
+        ImageLoader.getInstance().init(config);
     }
 
 
