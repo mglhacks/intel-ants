@@ -38,6 +38,9 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
     /**
@@ -250,14 +253,25 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     };
 
-    private void lockBike(String deviceAddress) {
+    private Map<String, String> buildPostData(String deviceAddress) {
+        Map<String, String> data = new HashMap<>();
+        AccessToken accessToken = AccessToken.getCurrentAccessToken();
+        data.put("fb", accessToken.getUserId());
+        data.put("uuid", deviceAddress);
+        return data;
+    }
 
+    private void lockBike(String deviceAddress) {
+        Toast.makeText(getApplicationContext(),"Lock requist sent" ,
+                Toast.LENGTH_LONG).show();
+        NetworkHelper.sendPostRequest("lock", this, buildPostData(deviceAddress));
     }
 
     private void unlockBike(String deviceAddress) {
-
+        Toast.makeText(getApplicationContext(),"Unlock requist sent" ,
+                Toast.LENGTH_LONG).show();
+        NetworkHelper.sendPostRequest("unlock", this, buildPostData(deviceAddress));
     }
-
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
