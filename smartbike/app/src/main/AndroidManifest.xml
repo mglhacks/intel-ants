@@ -36,13 +36,6 @@
                 "keyboard|keyboardHidden|screenLayout|screenSize|orientation"
             android:theme="@android:style/Theme.Translucent.NoTitleBar"
             android:label="@string/app_name" />
-        <activity
-            android:name="com.ants.smartbike.bluetooth.AutoConnectActivity"
-            android:label="@string/title_activity_auto_connect" >
-        </activity>
-        <service
-            android:name="com.ants.smartbike.bluetooth.BluetoothLeService"
-            android:enabled="true" />
 
         <meta-data android:name="com.facebook.sdk.ApplicationId"
             android:value="@string/facebook_app_id"/>

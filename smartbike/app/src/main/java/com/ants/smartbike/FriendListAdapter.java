@@ -1,4 +1,4 @@
-package com.ants.smartbike.dummy;
+package com.ants.smartbike;
 
 import android.app.Activity;
 import android.view.LayoutInflater;

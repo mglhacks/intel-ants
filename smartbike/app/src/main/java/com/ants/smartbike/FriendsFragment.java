@@ -10,8 +10,6 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import com.ants.smartbike.dummy.FriendListAdapter;
-
 import java.util.ArrayList;
 import java.util.List;
 
