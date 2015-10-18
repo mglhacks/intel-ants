@@ -24,6 +24,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -59,18 +60,25 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private ViewPager mViewPager;
 
     private FriendsFragment friendsFragment;
+    private BikesFragment bikesFragment;
+    private ProfileFragment profileFragment;
 
 
     private static final int REQUEST_ENABLE_BT = 1;
-    private static final int RSSI_LOCK_THRESHOLD = 72;
-    private static final int RSSI_UNLOCK_THRESHOLD = 68;
+    private static final int RSSI_LOCK_THRESHOLD = -72;
+    private static final int RSSI_UNLOCK_THRESHOLD = -70;
 
-    private boolean currentlyLocked = true;
+    public static final String DEFAULT_DEVICE_ADDRESS = "98:4F:EE:04:51:21";
+
+    public boolean currentlyLocked = true;
 
     private BluetoothAdapter myBluetoothAdapter;
 
     private int readRSSIInterval = 2000; // 2 seconds
     private Handler mHandler;
+
+    private Button lockButton;
+    private Button unlockButton;
 
     Runnable rssiReader = new Runnable() {
         @Override
@@ -114,6 +122,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 //        });
 
         friendsFragment = FriendsFragment.newInstance("", "");
+        bikesFragment = new BikesFragment();
+        profileFragment = new ProfileFragment();
 
         // send friends request
         AccessToken accessToken = AccessToken.getCurrentAccessToken();
@@ -155,10 +165,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     Toast.LENGTH_LONG).show();
         } else {
             turnBluetoothOn();
+            registerReceiver(bReceiver, new IntentFilter(BluetoothDevice.ACTION_FOUND));
 
             mHandler = new Handler();
             startRepeatingTask();
         }
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        unregisterReceiver(bReceiver);
     }
 
     private void turnBluetoothOn() {
@@ -170,7 +187,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     Toast.LENGTH_LONG).show();
         }
         else{
-            Toast.makeText(getApplicationContext(),"Bluetooth is already on",
+            Toast.makeText(getApplicationContext(),"Bluetooth is on",
                     Toast.LENGTH_LONG).show();
         }
     }
@@ -186,8 +203,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             myBluetoothAdapter.startDiscovery();
             Toast.makeText(getApplicationContext(), "started discovering",
                     Toast.LENGTH_LONG).show();
-
-            registerReceiver(bReceiver, new IntentFilter(BluetoothDevice.ACTION_FOUND));
         }
     }
 
@@ -218,7 +233,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private static boolean isDeviceElock(String deviceAddress) {
-        if (deviceAddress.equals("98:4F:EE:04:51:21")) {
+        if (deviceAddress.equals(DEFAULT_DEVICE_ADDRESS)) {
             return true;
         } else {
             return false;
@@ -232,17 +247,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             if (BluetoothDevice.ACTION_FOUND.equals(action)) {
                 // Get the BluetoothDevice object from the Intent
                 BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-                Toast.makeText(getApplicationContext(),device.getAddress() ,
-                        Toast.LENGTH_LONG).show();
+                int rssi = intent.getShortExtra(BluetoothDevice.EXTRA_RSSI, Short.MIN_VALUE);
+//                Toast.makeText(getApplicationContext(),device.getAddress()  + ": " + rssi + "dBm" ,
+//                        Toast.LENGTH_SHORT).show();
 
                 if (isDeviceElock(device.getAddress())) {
-                    myBluetoothAdapter.cancelDiscovery();
-                    int rssi = intent.getShortExtra(BluetoothDevice.EXTRA_RSSI, Short.MIN_VALUE);
-                    Toast.makeText(getApplicationContext(),"  RSSI: " + rssi + "dBm", Toast.LENGTH_SHORT).show();
-                    if (currentlyLocked && rssi < RSSI_UNLOCK_THRESHOLD) {
-                        unlockBike(device.getAddress());
-                    } else if (!currentlyLocked && rssi >= RSSI_LOCK_THRESHOLD) {
-                        lockBike(device.getAddress());
+                    System.out.println(rssi + "dBm, currentlyLocked: " + currentlyLocked);
+//                    myBluetoothAdapter.cancelDiscovery();
+                    if (currentlyLocked && rssi > RSSI_UNLOCK_THRESHOLD) {
+                        unlockBike();
+                    } else if (!currentlyLocked && rssi <= RSSI_LOCK_THRESHOLD) {
+                        lockBike();
                     }
                 }
                 // do not try to connect
@@ -256,21 +271,35 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Map<String, String> buildPostData(String deviceAddress) {
         Map<String, String> data = new HashMap<>();
         AccessToken accessToken = AccessToken.getCurrentAccessToken();
-        data.put("fb", accessToken.getUserId());
-        data.put("uuid", deviceAddress);
+        data.put("userFbid", accessToken.getUserId());
+        data.put("bikeUUID", deviceAddress);
         return data;
     }
 
-    private void lockBike(String deviceAddress) {
-        Toast.makeText(getApplicationContext(),"Lock requist sent" ,
+    public void lockBike() {
+        Toast.makeText(getApplicationContext(),"Lock request sent" ,
                 Toast.LENGTH_LONG).show();
-        NetworkHelper.sendPostRequest("lock", this, buildPostData(deviceAddress));
+        NetworkHelper.sendPostRequest("lock", this, buildPostData(DEFAULT_DEVICE_ADDRESS));
+        manageLockStatus(true);
     }
 
-    private void unlockBike(String deviceAddress) {
-        Toast.makeText(getApplicationContext(),"Unlock requist sent" ,
+    public void unlockBike() {
+        Toast.makeText(getApplicationContext(),"Unlock request sent" ,
                 Toast.LENGTH_LONG).show();
-        NetworkHelper.sendPostRequest("unlock", this, buildPostData(deviceAddress));
+        NetworkHelper.sendPostRequest("unlock", this, buildPostData(DEFAULT_DEVICE_ADDRESS));
+        manageLockStatus(false);
+    }
+
+    private void manageLockStatus(boolean locked) {
+        currentlyLocked = locked;
+        if (lockButton == null) {
+            lockButton = (Button) findViewById(R.id.lock_button);
+        }
+        if (unlockButton == null) {
+            unlockButton = (Button) findViewById(R.id.unlock_button);
+        }
+        lockButton.setVisibility(locked ? View.GONE : View.VISIBLE);
+        unlockButton.setVisibility((!locked) ? View.GONE : View.VISIBLE);
     }
 
     @Override
@@ -314,8 +343,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         public Fragment getItem(int position) {
             // getItem is called to instantiate the fragment for the given page.
             // Return a PlaceholderFragment (defined as a static inner class below).
-            if (position == 1) {
+            if (position == 0) {
+                return bikesFragment;
+            } else if (position == 1) {
                 return friendsFragment;
+            } else if (position == 2) {
+                return profileFragment;
             }
             return PlaceholderFragment.newInstance(position + 1);
         }

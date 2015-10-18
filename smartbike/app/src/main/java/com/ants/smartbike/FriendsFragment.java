@@ -1,5 +1,8 @@
 package com.ants.smartbike;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
@@ -10,8 +13,12 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import com.facebook.AccessToken;
+
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -46,6 +53,8 @@ public class FriendsFragment extends Fragment implements AbsListView.OnItemClick
      * Views.
      */
     private FriendListAdapter friendListAdapter;
+    private SharedPreferences settings;
+    private Map<String, Boolean> approvedCache;
 
     private List<FriendItem> friends = new ArrayList<>();
 
@@ -76,6 +85,9 @@ public class FriendsFragment extends Fragment implements AbsListView.OnItemClick
         }
 
         friendListAdapter = new FriendListAdapter(this.getActivity(), friends);
+
+        approvedCache = new HashMap<>();
+        settings = getActivity().getPreferences(0);
     }
 
     @Override
@@ -99,13 +111,77 @@ public class FriendsFragment extends Fragment implements AbsListView.OnItemClick
         mListener = null;
     }
 
+    private Map<String, String> buildPostData(String userFbid) {
+        Map<String, String> data = new HashMap<>();
+        AccessToken accessToken = AccessToken.getCurrentAccessToken();
+        data.put("ownerFbid", accessToken.getUserId());
+        data.put("userFbid", userFbid);
+        data.put("bikeUUID", "98:4F:EE:04:51:21");
+        return data;
+    }
+
+    private boolean getApproved(String friendFbid) {
+        if (approvedCache.containsKey(friendFbid)) {
+            return approvedCache.get(friendFbid);
+        } else {
+            return settings.getBoolean(friendFbid, false);
+        }
+    }
+
     @Override
-    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+    public void onItemClick(AdapterView<?> parent, View view, final int position, long id) {
+        final String friendFbid = friends.get(position).id;
+        String friendName = friends.get(position).name;
+        boolean approved = getApproved(friendFbid);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+
+        if (!approved) {
+            builder.setTitle("Approve " + friendName + " to use your bike?");
+            builder.setPositiveButton(R.string.approve, new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int id) {
+                    // User clicked OK button
+                    NetworkHelper.sendPostRequest("approve", getContext(), buildPostData(friendFbid));
+                    approvedCache.put(friendFbid, true);
+                }
+            });
+        } else {
+            builder.setTitle("Disable " + friendName + " from using your bike?");
+            builder.setPositiveButton(R.string.disapprove, new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int id) {
+                    // User clicked OK button
+                    NetworkHelper.sendPostRequest("disapprove", getContext(), buildPostData(friendFbid));
+                    approvedCache.put(friendFbid, false);
+                }
+            });
+        }
+
+        builder.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                // User cancelled the dialog
+            }
+        });
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
+
         if (null != mListener) {
             // Notify the active callbacks interface (the activity, if the
             // fragment is attached to one) that an item has been selected.
             mListener.onFragmentInteraction(friends.get(position).id);
         }
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        SharedPreferences.Editor editor = settings.edit();
+        for (Map.Entry<String, Boolean> entry: approvedCache.entrySet()) {
+            editor.putBoolean(entry.getKey(), entry.getValue());
+        }
+
+        // Commit the edits!
+        editor.commit();
     }
 
     /**

@@ -31,7 +31,6 @@ public class NetworkHelper {
 
 
     public static void sendGetRequest(String targetMethod, Context context, Map<String, String> params) {
-//        URLEncodedUtils.format();
         String url = BASE_URL + targetMethod;
         Uri.Builder b = Uri.parse(url).buildUpon();
         for (Map.Entry<String, String> entry : params.entrySet()) {

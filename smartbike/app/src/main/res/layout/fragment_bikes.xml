@@ -1,0 +1,33 @@
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
+    android:layout_height="match_parent" tools:context="com.ants.smartbike.BikesFragment">
+
+    <Button
+        android:id="@+id/lock_button"
+        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:gravity="center|center"
+        android:layout_marginBottom="10dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginLeft="20dp"
+        android:layout_marginRight="20dp"
+        android:textColor="#FFFFFF"
+        android:visibility="gone"
+        android:background="#C62828"
+        android:text="@string/lock" />
+
+    <Button
+        android:id="@+id/unlock_button"
+        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:gravity="center|center"
+        android:layout_marginBottom="10dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginLeft="20dp"
+        android:layout_marginRight="20dp"
+        android:visibility="gone"
+        android:textColor="#FFFFFF"
+        android:background="#388E3C"
+        android:text="@string/unlock" />
+
+</FrameLayout>
